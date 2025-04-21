@@ -1,0 +1,6 @@
+@Tarmiz.API_HostAddress = http://localhost:5191
+
+GET {{Tarmiz.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
