@@ -1,7 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using Tarmiz.API.Data;
+using Tarmiz.API.Mappings;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddDbContext<TarmizDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+builder.Services.AddAutoMapper(typeof(AutoMappers));
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
