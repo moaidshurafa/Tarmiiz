@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Tarmiz.API.Data;
 using Tarmiz.API.Models;
 using Tarmiz.API.Models.DTO;
+using Tarmiz.API.Repositories.Repository;
 
 namespace Tarmiz.API.Controllers
 {
@@ -15,22 +16,24 @@ namespace Tarmiz.API.Controllers
     {
         private readonly TarmizDbContext dbContext;
         private readonly IMapper mapper;
+        private readonly IListingRepository listingRepository;
 
-        public ListingController(TarmizDbContext dbContext, IMapper mapper)
+        public ListingController(TarmizDbContext dbContext, IMapper mapper, IListingRepository listingRepository)
         {
             this.dbContext = dbContext;
             this.mapper = mapper;
+            this.listingRepository = listingRepository;
         }
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var lists =await dbContext.Listings.ToListAsync();
+            var lists =await listingRepository.GetAllAsync();
             return Ok(mapper.Map<List<ListingDTO>>(lists));
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
-            var list = await dbContext.Listings.FirstOrDefaultAsync(x => x.ListingId == id);
+            var list = await listingRepository.GetAsync(x => x.ListingId == id);
             if (list == null)
             {
                 return NotFound();
@@ -40,44 +43,32 @@ namespace Tarmiz.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] AddListRequestDTO addListRequestDTO)
         {
-            if (addListRequestDTO == null)
-            {
-                return BadRequest();
-            }
             var listing = mapper.Map<Listing>(addListRequestDTO);
-            listing.ListingId = Guid.NewGuid();
-            await dbContext.Listings.AddAsync(listing);
-            await dbContext.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = listing.ListingId }, mapper.Map<ListingDTO>(listing));
+            await listingRepository.AddAsync(listing);
+            return Ok(mapper.Map<ListingDTO>(listing));
         }
         [HttpPut("{id}")]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateListRequestDTO updateListRequestDTO)
         {
-            if (updateListRequestDTO == null)
-            {
-                return BadRequest();
-            }
-            var listing = await dbContext.Listings.FirstOrDefaultAsync(x => x.ListingId == id);
-            if (listing == null)
+            var existingListing = await listingRepository.GetAsync(x => x.ListingId == id);
+            if (existingListing == null)
             {
                 return NotFound();
             }
-            mapper.Map(updateListRequestDTO, listing);
-            dbContext.Listings.Update(listing);
-            await dbContext.SaveChangesAsync();
-            return Ok(mapper.Map<ListingDTO>(listing));
+            mapper.Map(updateListRequestDTO, existingListing);
+            await listingRepository.UpdateAsync(existingListing);
+            return Ok(mapper.Map<ListingDTO>(existingListing));
         }
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
-            var listing = await dbContext.Listings.FirstOrDefaultAsync(x => x.ListingId == id);
-            if (listing == null)
+            var existingListing = await listingRepository.GetAsync(x => x.ListingId == id);
+            if (existingListing == null)
             {
                 return NotFound();
             }
-            dbContext.Listings.Remove(listing);
-            await dbContext.SaveChangesAsync();
-            return NoContent();
+            await listingRepository.RemoveAsync(existingListing);
+            return Ok(mapper.Map<ListingDTO>(existingListing));
         }
 
 

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Tarmiz.API.Data;
 using Tarmiz.API.Mappings;
+using Tarmiz.API.Repositories;
+using Tarmiz.API.Repositories.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TarmizDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<IListingRepository, ListingRepository>();
 
 builder.Services.AddAutoMapper(typeof(AutoMappers));
 builder.Services.AddControllers();
